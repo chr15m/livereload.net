@@ -19,7 +19,10 @@
 (defn get-files-from-picker [dir-handle]
   (p/let [entries (j/call dir-handle :entries)
           handles (clj->js (unpack-entries entries []))
-          file-handle-promises (.map (js/Array.from handles) (fn [[_filename handle]] (when handle (.getFile handle))))
+          file-handle-promises (.map (js/Array.from handles)
+                                     (fn [[_filename handle]]
+                                       (when (and handle (j/get handle :getFile))
+                                         (.getFile handle))))
           files (js/Promise.all file-handle-promises)]
     (.filter files identity)))
 
