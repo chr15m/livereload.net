@@ -96,7 +96,9 @@
 (defn component-main [state]
   [:div
    [:h1 "livereload.net"]
-   [:p "Live-reloading web development without a build system."]
+   [:p "Live-reloading web development. 100% in the browser. No build system required."]
+   [:p "Choose your web app folder to get started:"]
+   [:p [component-start state]]
    [:h2 "How it works"]
    [:ul
     [:li [:a {:href "#"} "Download the template"] " and unzip it on your computer."]
