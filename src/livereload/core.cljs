@@ -7,6 +7,14 @@
 
 (defonce state (r/atom {}))
 
+(defn register-service-worker [state]
+  (when (j/get js/navigator :serviceWorker)
+    (p/catch
+      (p/let [sw (j/call-in js/navigator [:serviceWorker :register] "files/worker.js")]
+        (swap! state assoc :sw sw)
+        (js/console.log "Registration:" sw))
+      (fn [err] (js/console.error err)))))
+
 (defn unpack-entries [entries results]
   (p/let [n (j/call entries :next)
           done (j/get n :done)
@@ -26,12 +34,19 @@
           files (js/Promise.all file-handle-promises)]
     (.filter files identity)))
 
+(defn get-files-from-event [ev]
+  (-> ev
+      (j/get-in [:target :files])
+      (js/Array.from)))
+
 (defn compare-file-last-modified [files known-files]
   (p/let [changed-files (js/Promise.all
                           (.map files
                                 (fn [f]
-                                  (let [n (j/get f :webkitRelativePath)
-                                        n (if (seq n) n (j/get f :name))]
+                                  (let [webkit-path (j/get f :webkitRelativePath)
+                                        n (if (seq webkit-path)
+                                            (str "/files/" (-> webkit-path (.split "/") (.slice 1) (.join "/")))
+                                            (j/get f :name))]
                                     (when (not= (j/get f :lastModified)
                                                 (:lastModified (get known-files n)))
                                       (p/let [content (j/call f :text)]
@@ -43,8 +58,12 @@
 (defn compare-file-contents [files known-files]
   ; on firefox we have to get content and compare it because all other fields are frozen
   (p/let [files-struct (p/all (for [f files]
-                                (p/let [content (j/call f :text)]
-                                  [(j/get f :webkitRelativePath)
+                                (p/let [content (j/call f :text)
+                                        webkit-path (j/get f :webkitRelativePath)
+                                        n (if (seq webkit-path)
+                                            (str "/files/" (-> webkit-path (.split "/") (.slice 1) (.join "/")))
+                                            (j/get f :name))]
+                                  [n
                                    (js->clj
                                      (j/assoc! (j/select-keys f [:lastModified :size :type :name])
                                                :content content)
@@ -70,7 +89,8 @@
                              (compare-file-contents files known-files)
                              {})]
       (when (seq modified-files)
-        (js/console.log "modified-files" (clj->js modified-files)))
+        (js/console.log "modified-files" (clj->js modified-files))
+        (.postMessage (-> @state :sw (j/get :active)) (clj->js {:type "cache" :files modified-files})))
       ; TODO: trigger file changed callback
       (swap! state update-in [:files] #(merge %1 modified-files))
       (js/setTimeout #(check-dir-for-changes! state) 250))
@@ -91,7 +111,7 @@
              :on-change (fn [ev]
                           (swap! state assoc :file-handles
                                  {:source :input
-                                  :files (js/Array.from (j/get-in ev [:target :files]))}))}]))
+                                  :files (get-files-from-event ev)}))}]))
 
 (defn component-main [state]
   [:div
@@ -118,5 +138,6 @@
                (js/document.getElementById "app")))
 
 (defn init []
+  (register-service-worker state)
   (check-dir-for-changes! state)
   (start))

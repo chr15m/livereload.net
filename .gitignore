@@ -2,6 +2,7 @@
 node_modules
 package-lock.json
 public/js
+public/files
 build
 .*.swp
 .clj-kondo/.cache
