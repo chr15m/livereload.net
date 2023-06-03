@@ -31,25 +31,30 @@
                                  {:source :input
                                   :files (get-files-from-event ev)}))}]))
 
+(defn component-frame [_state]
+  [:iframe.main {:src "files/index.html"}])
+
 (defn component-main [state]
-  [:div
-   [:h1 "livereload.net"]
-   [:p "Live-reloading web development. 100% in the browser. No build system required."]
-   [:p "Choose your web app folder to get started:"]
-   [:p [component-start state]]
-   [:h2 "How it works"]
-   [:ul
-    [:li [:a {:href "#"} "Download the template"] " and unzip it on your computer."]
-    [:li "Drag the folder onto this window, or choose the folder: " [component-start state]]
-    [:li "Open the files in your text editor."]]
-   [:p "When you make changes to the files and save them, your page will be automatically reloaded.
-       Reloading is intelligent. If you modify a CSS file, only the CSS will be reloaded.
-       If you modify a JS file, only the JS will be reloaded."]
-   [:p "You can use this as a simple alternative to sites like codepen and Glitch.
-       All your code stays private on your computer.
-       Nothing is actually uploaded and there is no server to upload to, everything runs right in your browser.
-       The page you're developing will automatically refresh every time you save the code."]
-   [:p "Get started: " [component-start state]]])
+  (if (:file-handles @state)
+    [component-frame state]
+    [:div
+     [:h1 "livereload.net"]
+     [:p "Live-reloading web development. 100% in the browser. No build system required."]
+     [:p "Choose your web app folder to get started:"]
+     [:p [component-start state]]
+     [:h2 "How it works"]
+     [:ul
+      [:li [:a {:href "#"} "Download the template"] " and unzip it on your computer."]
+      [:li "Drag the folder onto this window, or choose the folder: " [component-start state]]
+      [:li "Open the files in your text editor."]]
+     [:p "When you make changes to the files and save them, your page will be automatically reloaded.
+         Reloading is intelligent. If you modify a CSS file, only the CSS will be reloaded.
+         If you modify a JS file, only the JS will be reloaded."]
+     [:p "You can use this as a simple alternative to sites like codepen and Glitch.
+         All your code stays private on your computer.
+         Nothing is actually uploaded and there is no server to upload to, everything runs right in your browser.
+         The page you're developing will automatically refresh every time you save the code."]
+     [:p "Get started: " [component-start state]]]))
 
 (defn start {:dev/after-load true} []
   (rdom/render [component-main state]
