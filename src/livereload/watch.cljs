@@ -65,10 +65,10 @@
                           {} files-struct)]
     changes))
 
-(defn check-dir-for-changes! [state]
+(defn check-dir-for-changes! [fn-get-file-handles fn-get-known-files fn-callback]
   (p/catch
-    (p/let [{:keys [source files dir-handle]} (:file-handles @state)
-            known-files (:files @state)
+    (p/let [{:keys [source files dir-handle]} (fn-get-file-handles)
+            known-files (fn-get-known-files)
             modified-files (case source
                              :picker
                              (p/let [files (get-files-from-picker dir-handle)]
@@ -76,12 +76,8 @@
                              :input
                              (compare-file-contents files known-files)
                              {})]
-      (when (seq modified-files)
-        (js/console.log "modified-files" (clj->js modified-files))
-        (.postMessage (-> @state :sw (j/get :active)) (clj->js {:type "cache" :files modified-files})))
-      ; TODO: trigger file changed callback
-      (swap! state update-in [:files] #(merge %1 modified-files))
-      (js/setTimeout #(check-dir-for-changes! state) 250))
+      (fn-callback modified-files)
+      (js/setTimeout #(check-dir-for-changes! fn-get-file-handles fn-get-known-files fn-callback) 250))
     (fn [err]
       (js/console.error err)
-      (js/setTimeout #(check-dir-for-changes! state) 2000))))
+      (js/setTimeout #(check-dir-for-changes! fn-get-file-handles fn-get-known-files fn-callback) 2000))))

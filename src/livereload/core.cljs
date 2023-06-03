@@ -56,11 +56,20 @@
          The page you're developing will automatically refresh every time you save the code."]
      [:p "Get started: " [component-start state]]]))
 
+(defn handle-modified-files [state modified-files]
+  (when (seq modified-files)
+    (js/console.log "modified-files" (clj->js modified-files))
+    (.postMessage (-> @state :sw (j/get :active)) (clj->js {:type "cache" :files modified-files})))
+  (swap! state update-in [:files] #(merge %1 modified-files)))
+
 (defn start {:dev/after-load true} []
   (rdom/render [component-main state]
                (js/document.getElementById "app")))
 
 (defn init []
   (register-service-worker state)
-  (check-dir-for-changes! state)
+  (check-dir-for-changes!
+    #(:file-handles @state)
+    #(:files @state)
+    #(handle-modified-files state %))
   (start))
