@@ -5,7 +5,9 @@
 
 (def cache-name "livereload-v1")
 
-(defn cache-files [files prefix]
+; TODO: remove prefix stuff. check if it's used if there are sub-folders.
+
+(defn cache-files [files prefix source]
   (js/console.log "cache-files" prefix files)
   (p/let [cache (.open js/caches cache-name)]
     (js/console.log "cache" cache)
@@ -17,13 +19,17 @@
                (js/console.log "caching" url)
                (.put cache url response)))
            (js/Object.keys files)))
-    (js/console.log "Caching completed.")))
+    (js/console.log "Caching completed.")
+    (.postMessage source #js {:type "cached" :files files :prefix prefix})    
+    #_ (p/let [client (.get js/clients client-id)]
+         (when client
+           (.postMessage client #js {:type "cached" :files files :prefix prefix})))))
 
 (defn flush-cache [prefix]
   (p/let [cache (.open js/caches cache-name)
           cache-keys (.keys cache)]
     (p/all (map (fn [request]
-                  (when (.startsWith (j/get request :url) prefix)
+                  (when (or (.startsWith (j/get request :url) prefix) (nil? prefix))
                     (.delete cache request)))
                 cache-keys))
     (js/console.log "Cache flushed.")))
@@ -31,13 +37,14 @@
 (defn handle-message [event]
   (js/console.log "handle-message" event)
   (let [data (j/get event :data)
-        msg-type (j/get data :type)]
+        msg-type (j/get data :type)
+        source (j/get event :source)]
     (cond (= msg-type "cache")
           (let [files (j/get data :files)
                 prefix (j/get data :prefix)]
-            (cache-files files prefix))
+            (cache-files files prefix source))
           (= msg-type "flush")
-          (let [prefix (.-prefix data)]
+          (let [prefix (j/get data :prefix)]
             (flush-cache prefix)))))
 
 (defn handle-fetch [event]

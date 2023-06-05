@@ -28,17 +28,15 @@
       (js/Array.from)))
 
 (defn compare-file-last-modified [files known-files]
+  ; chrome can simply check the last modified using the new files API
   (p/let [changed-files (js/Promise.all
                           (.map files
                                 (fn [f]
-                                  (let [webkit-path (j/get f :webkitRelativePath)
-                                        n (if (seq webkit-path)
-                                            (str "/files/" (-> webkit-path (.split "/") (.slice 1) (.join "/")))
-                                            (j/get f :name))]
+                                  (let [fname (j/get f :name)]
                                     (when (not= (j/get f :lastModified)
-                                                (:lastModified (get known-files n)))
+                                                (:lastModified (get known-files fname)))
                                       (p/let [content (j/call f :text)]
-                                        [n (j/assoc! (j/select-keys f [:lastModified :size :type :name])
+                                        [fname (j/assoc! (j/select-keys f [:lastModified :size :type :name])
                                                      :content content)]))))))
           changed-files (js->clj changed-files :keywordize-keys true)]
     (into {} changed-files)))
@@ -48,10 +46,8 @@
   (p/let [files-struct (p/all (for [f files]
                                 (p/let [content (j/call f :text)
                                         webkit-path (j/get f :webkitRelativePath)
-                                        n (if (seq webkit-path)
-                                            (str "/files/" (-> webkit-path (.split "/") (.slice 1) (.join "/")))
-                                            (j/get f :name))]
-                                  [n
+                                        fname (-> webkit-path (.split "/") (.slice 1) (.join "/"))]
+                                  [fname
                                    (js->clj
                                      (j/assoc! (j/select-keys f [:lastModified :size :type :name])
                                                :content content)
