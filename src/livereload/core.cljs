@@ -31,8 +31,12 @@
                                  {:source :input
                                   :files (get-files-from-event ev)}))}]))
 
-(defn component-frame [_state]
-  [:iframe.main {:src "files/index.html"}])
+(defn component-frame [state]
+  [:<>
+   [:div.float-ui
+    [:p "livereload.net - " (-> @state :file-handles :dir-name)]
+    [:button "Force refresh"]]
+   [:iframe.main {:src "files/index.html"}]])
 
 (defn component-main [state]
   (if (:file-handles @state)
