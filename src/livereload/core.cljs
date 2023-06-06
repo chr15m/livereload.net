@@ -9,10 +9,15 @@
 (defonce state (r/atom {}))
 
 ; TODO: prefix cache based on disk directory name
-; TODO: test completely removing service worker and starting registration from scratch
 ; TODO: support drag and drop of folder
-; TODO: test out a long page
 ; TODO: warn about absolute URLs in the page if present
+; TODO: front page design
+
+; TODO: fix initial service worker registration (completely remove it and retry)
+; TODO: test out a long page
+; TODO: test nested dirs.
+; TODO: test performance with many files.
+; TODO: test performance with large files (e.g. images)
 
 (defn refresh-iframe []
   (let [sub (.querySelector js/document "iframe")]
