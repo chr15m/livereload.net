@@ -13,6 +13,7 @@
 ; TODO: support drag and drop of folder
 ; TODO: warn about absolute URLs in the page if present
 ; TODO: front page design
+; TODO: use blobs and pass blob urls instead of actual content
 
 ; TODO: fix initial service worker registration (completely remove it and retry)
 ; TODO: test out a long page
@@ -30,9 +31,13 @@
     (js/console.log "Finding JS/CSS references to" fname "and reloading.")
     (when sub
       (let [scripts (j/call-in sub [:contentDocument :querySelectorAll] (str "script[src^='" fname "']"))
-            hrefs (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href^='" fname "']"))]
-        ;(js/console.log "hrefs" hrefs)
+            hrefs (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href^='" fname "']"))
+            base-url (j/call-in js/document [:location :href :split] "?")
+            url (js/URL. fname base-url)]
         (doseq [script (.from js/Array scripts)]
+          ;(j/call-in url [:searchParams :set] "_lrh" (js/Math.random))
+          (j/assoc! url :hash (js/Math.random))
+          ;(js/console.log "URL:" (.toString url))
           ; script tags have to be created fresh
           ; they won't reload even if you add a hash
           (let [parent (j/get script :parentElement)
@@ -42,7 +47,8 @@
               (when (not= (j/get a :name) "src")
                 (.setAttribute clone (j/get a :name) (j/get a :value))))
             ;(.setAttribute clone "data-reload" (inc (.getAttribute src "data-reload")))
-            (.setAttribute clone "src" (str fname "#" (js/Math.random)))
+            ;(.setAttribute clone "src" (str fname "#" (js/Math.random)))
+            (.setAttribute clone "src" (.replace (.toString url) base-url ""))
             (.removeChild parent script)
             (.appendChild parent clone)))
         (doseq [href (.from js/Array hrefs)]
