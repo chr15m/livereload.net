@@ -31,7 +31,7 @@
     (js/console.log "Finding JS/CSS references to" fname "and reloading.")
     (when sub
       (let [scripts (j/call-in sub [:contentDocument :querySelectorAll] (str "script[src^='" fname "']"))
-            hrefs (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href^='" fname "']"))
+            metalinks (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href^='" fname "']"))
             base-url (j/call-in js/document [:location :href :split] "?")
             url (js/URL. fname base-url)]
         (doseq [script (.from js/Array scripts)]
@@ -51,8 +51,8 @@
             (.setAttribute clone "src" (.replace (.toString url) base-url ""))
             (.removeChild parent script)
             (.appendChild parent clone)))
-        (doseq [href (.from js/Array hrefs)]
-          (.setAttribute href fname))))))
+        (doseq [metalink (.from js/Array metalinks)]
+          (.setAttribute metalink "href" fname))))))
 
 (defn handle-worker-message [event]
   ;(js/console.log "handle-worker-event" (j/get event :data))
