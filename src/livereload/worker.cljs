@@ -20,10 +20,7 @@
                (.put cache url response)))
            (js/Object.keys files)))
     (js/console.log "Caching completed.")
-    (.postMessage source #js {:type "cached" :files files :prefix prefix})    
-    #_ (p/let [client (.get js/clients client-id)]
-         (when client
-           (.postMessage client #js {:type "cached" :files files :prefix prefix})))))
+    (.postMessage source #js {:type "cached" :files files :prefix prefix})))
 
 (defn flush-cache [prefix]
   (p/let [cache (.open js/caches cache-name)

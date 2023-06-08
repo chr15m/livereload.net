@@ -24,24 +24,42 @@
     (when sub
       (j/assoc! sub :src (j/get sub "src")))))
 
+(defn find-references-and-reload [fname _file]
+  (let [sub (.querySelector js/document "iframe")]
+    (when sub
+      (let [srcs (j/call-in sub [:contentDocument :querySelectorAll] (str "script[src='" fname "']"))
+            hrefs (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href='" fname "']"))]
+        ;(js/console.log "srcs" srcs)
+        ;(js/console.log "hrefs" hrefs)
+        (doseq [src (.from js/Array srcs)]
+          (let [parent (j/get src :parentElement)
+                clone (.createElement js/document "script")]
+            (doseq [a (.from js/Array (j/get src :attributes))]
+              (when (not= (j/get a :name) "src")
+                (.setAttribute clone (j/get a :name) (j/get a :value))))
+            (.setAttribute clone "src" fname)
+            (.removeChild parent src)
+            (.appendChild parent clone)))
+        (doseq [href (.from js/Array hrefs)]
+          (.setAttribute href fname))))))
+
 (defn handle-worker-message [event]
-  (js/console.log "handle-worker-event" (j/get event :data))
+  ;(js/console.log "handle-worker-event" (j/get event :data))
   (let [t (j/get-in event [:data :type])]
     (when (= t "cached")
-      (js/console.log "cached" (j/get-in event [:data :files]))
+      ;(js/console.log "cached" (j/get-in event [:data :files]))
       (swap! state assoc :started true)
       (let [files (j/get-in event [:data :files])
             sub (.querySelector js/document "iframe")]
         (when sub
-          ;(js/console.log "scripts" (j/call-in sub [:contentWindow :document :querySelector] "script"))
           (doseq [fname (.keys js/Object files)]
             (let [file (j/get files fname)]
-              (js/console.log "checking" fname file)
+              ;(js/console.log "checking" fname file)
               (cond
                 (= fname "index.html")
                 (refresh-iframe)
-                :else
-                (js/console.log "Finding JS/CSS references to" fname "and reloading.")))))))))
+                (not (.startsWith fname "."))
+                (find-references-and-reload fname file)))))))))
 
 (defn register-service-worker [state]
   (when (j/get js/navigator :serviceWorker)
