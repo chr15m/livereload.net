@@ -15,7 +15,8 @@
       (map (fn [filename]
              (let [url (str prefix filename)
                    file (j/get files filename)
-                   response (js/Response. (j/get file :content) #js {:headers #js {"Content-Type" (j/get file :type)}})]
+                   response (js/Response. (j/get file :content) #js {:headers #js {"Content-Type" (j/get file :type)
+                                                                                   "Cache-Control" "no-store, no-cache"}})]
                (js/console.log "caching" url)
                (.put cache url response)))
            (js/Object.keys files)))
