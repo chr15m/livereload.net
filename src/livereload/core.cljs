@@ -33,10 +33,13 @@
       (let [scripts (j/call-in sub [:contentDocument :querySelectorAll] (str "script[src^='" fname "']"))
             metalinks (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href^='" fname "']"))
             base-url (j/call-in js/document [:location :href :split] "?")
-            url (js/URL. fname base-url)]
+            url (js/URL. fname base-url)
+            src (-> url
+                    (j/assoc! :hash (js/Math.random))
+                    (.toString url)
+                    (.replace base-url ""))]
         (doseq [script (.from js/Array scripts)]
           ;(j/call-in url [:searchParams :set] "_lrh" (js/Math.random))
-          (j/assoc! url :hash (js/Math.random))
           ;(js/console.log "URL:" (.toString url))
           ; script tags have to be created fresh
           ; they won't reload even if you add a hash
@@ -48,11 +51,11 @@
                 (.setAttribute clone (j/get a :name) (j/get a :value))))
             ;(.setAttribute clone "data-reload" (inc (.getAttribute src "data-reload")))
             ;(.setAttribute clone "src" (str fname "#" (js/Math.random)))
-            (.setAttribute clone "src" (.replace (.toString url) base-url ""))
+            (.setAttribute clone "src" src)
             (.removeChild parent script)
             (.appendChild parent clone)))
         (doseq [metalink (.from js/Array metalinks)]
-          (.setAttribute metalink "href" fname))))))
+          (.setAttribute metalink "href" src))))))
 
 (defn handle-worker-message [event]
   ;(js/console.log "handle-worker-event" (j/get event :data))
