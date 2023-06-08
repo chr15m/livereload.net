@@ -27,19 +27,23 @@
 
 (defn find-references-and-reload [fname _file]
   (let [sub (.querySelector js/document "iframe")]
+    (js/console.log "Finding JS/CSS references to" fname "and reloading.")
     (when sub
-      (let [srcs (j/call-in sub [:contentDocument :querySelectorAll] (str "script[src='" fname "']"))
-            hrefs (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href='" fname "']"))]
-        ;(js/console.log "srcs" srcs)
+      (let [scripts (j/call-in sub [:contentDocument :querySelectorAll] (str "script[src^='" fname "']"))
+            hrefs (j/call-in sub [:contentDocument :querySelectorAll] (str "link[href^='" fname "']"))]
         ;(js/console.log "hrefs" hrefs)
-        (doseq [src (.from js/Array srcs)]
-          (let [parent (j/get src :parentElement)
+        (doseq [script (.from js/Array scripts)]
+          ; script tags have to be created fresh
+          ; they won't reload even if you add a hash
+          (let [parent (j/get script :parentElement)
                 clone (.createElement js/document "script")]
-            (doseq [a (.from js/Array (j/get src :attributes))]
+            (doseq [a (.from js/Array (j/get script :attributes))]
+              ;(js/console.log "attribute" fname (j/get a :name))
               (when (not= (j/get a :name) "src")
                 (.setAttribute clone (j/get a :name) (j/get a :value))))
-            (.setAttribute clone "src" fname)
-            (.removeChild parent src)
+            ;(.setAttribute clone "data-reload" (inc (.getAttribute src "data-reload")))
+            (.setAttribute clone "src" (str fname "#" (js/Math.random)))
+            (.removeChild parent script)
             (.appendChild parent clone)))
         (doseq [href (.from js/Array hrefs)]
           (.setAttribute href fname))))))
