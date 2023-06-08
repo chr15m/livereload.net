@@ -136,12 +136,17 @@
      [:p "Get started: " [component-start state]]]))
 
 (defn handle-modified-files [state modified-files]
-  (let [modified-files (into {} (remove (fn [[k]] (and k (string/starts-with? k "."))) modified-files))]
+  (let [modified-files (->> modified-files
+                            (remove (fn [[k]] (and k (string/starts-with? k "."))))
+                            (into {}))]
     (when (seq modified-files)
       (js/console.log "modified-files" (clj->js modified-files))
       ; TODO: send createObjectURL of the file instead of the contents
-      (.postMessage (-> @state :sw (j/get :active))
-                    (clj->js {:type "cache" :files modified-files})))
+      (let [modified-files (->> modified-files
+                                (map (fn [[k v]] [k (dissoc v :content)]))
+                                (into {}))]
+        (.postMessage (-> @state :sw (j/get :active))
+                      (clj->js {:type "cache" :files modified-files}))))
     (swap! state update-in [:files] #(merge %1 modified-files))))
 
 (defn start {:dev/after-load true} []
