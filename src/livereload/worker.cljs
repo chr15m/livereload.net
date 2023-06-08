@@ -10,13 +10,12 @@
 (defn cache-files [files prefix source]
   (js/console.log "cache-files" prefix files)
   (p/let [cache (.open js/caches cache-name)]
-    (js/console.log "cache" cache)
     (p/all
       (map (fn [filename]
              (let [url (str prefix filename)
                    file (j/get files filename)
-                   response (js/Response. (j/get file :content) #js {:headers #js {"Content-Type" (j/get file :type)
-                                                                                   "Cache-Control" "no-store, no-cache"}})]
+                   response (js/Response. (j/get file :actual-file) #js {:headers #js {"Content-Type" (j/get file :type)
+                                                                                       "Cache-Control" "no-store, no-cache"}})]
                (js/console.log "caching" url)
                (.put cache url response)))
            (js/Object.keys files)))

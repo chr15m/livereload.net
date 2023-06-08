@@ -35,9 +35,8 @@
                                   (let [fname (j/get f :name)]
                                     (when (not= (j/get f :lastModified)
                                                 (:lastModified (get known-files fname)))
-                                      (p/let [content (j/call f :text)]
-                                        [fname (j/assoc! (j/select-keys f [:lastModified :size :type :name])
-                                                     :content content)]))))))
+                                      [fname (j/assoc! (j/select-keys f [:lastModified :size :type :name])
+                                                       :actual-file f)])))))
           changed-files (js->clj changed-files :keywordize-keys true)]
     (into {} changed-files)))
 
@@ -50,6 +49,7 @@
                                   [fname
                                    (js->clj
                                      (j/assoc! (j/select-keys f [:lastModified :size :type :name])
+                                               :actual-file f
                                                :content content)
                                      :keywordize-keys true)])))
           files-struct (into {} files-struct)

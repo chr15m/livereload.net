@@ -9,11 +9,11 @@
 
 (defonce state (r/atom {}))
 
+; TODO: use blobs and pass blob urls instead of actual content
 ; TODO: prefix cache based on disk directory name
 ; TODO: support drag and drop of folder
-; TODO: warn about absolute URLs in the page if present
 ; TODO: front page design
-; TODO: use blobs and pass blob urls instead of actual content
+; TODO: warn about absolute URLs in the page if present
 
 ; TODO: fix initial service worker registration (completely remove it and retry)
 ; TODO: test out a long page
