@@ -12,7 +12,7 @@
   (p/let [cache (.open js/caches cache-name)]
     (p/all
       (map (fn [filename]
-             (let [url (str prefix filename)
+             (let [url (str (when prefix (str prefix "/")) filename)
                    file (j/get files filename)
                    response (js/Response. (j/get file :actual-file) #js {:headers #js {"Content-Type" (j/get file :type)
                                                                                        "Cache-Control" "no-store, no-cache"}})]
@@ -26,7 +26,7 @@
   (p/let [cache (.open js/caches cache-name)
           cache-keys (.keys cache)]
     (p/all (map (fn [request]
-                  (when (or (.startsWith (j/get request :url) prefix) (nil? prefix))
+                  (when (or (.startsWith (j/get request :url) (str prefix "/")) (nil? prefix))
                     (.delete cache request)))
                 cache-keys))
     (js/console.log "Cache flushed.")))

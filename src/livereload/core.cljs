@@ -9,10 +9,10 @@
 
 (defonce state (r/atom {}))
 
-; TODO: use blobs and pass blob urls instead of actual content
-; TODO: prefix cache based on disk directory name
 ; TODO: support drag and drop of folder
 ; TODO: front page design
+; TODO: support sub-directories
+
 ; TODO: warn about absolute URLs in the page if present
 
 ; TODO: fix initial service worker registration (completely remove it and retry)
@@ -20,6 +20,7 @@
 ; TODO: test nested dirs.
 ; TODO: test performance with many files.
 ; TODO: test performance with large files (e.g. images)
+; TODO: test editing multiple projects at once
 
 (defn refresh-iframe []
   (let [sub (.querySelector js/document "iframe")]
@@ -81,9 +82,18 @@
       (p/let [sw (j/call-in js/navigator [:serviceWorker :register] "files/worker.js")]
         (swap! state assoc :sw sw)
         (js/console.log "Registration:" sw)
-        (.postMessage (-> sw (j/get :active)) #js {:type "flush"}))
+        )
       (fn [err] (js/console.error err)))
     (j/call-in js/navigator [:serviceWorker :addEventListener] "message" #(handle-worker-message %))))
+
+(defn send-to-serviceworker [*state message]
+  (.postMessage (-> *state :sw (j/get :active)) (clj->js message)))
+
+(defn picked-files! [*state source dir-name references]
+  (send-to-serviceworker *state {:type "flush" :prefix dir-name})
+  (assoc *state :file-handles (merge {:source source
+                                      :dir-name dir-name}
+                                     references)))
 
 (defn component-start [state]
   (if (j/get js/window :showDirectoryPicker)
@@ -91,10 +101,7 @@
               (fn [_ev]
                 (p/let [dir-handle (j/call js/window :showDirectoryPicker #js {:mode "read"})
                         dir-name (j/get dir-handle :name)]
-                  (swap! state assoc :file-handles
-                         {:source :picker
-                          :dir-name dir-name
-                          :dir-handle dir-handle})))}
+                  (swap! state picked-files! :picker dir-name {:dir-handle dir-handle})))}
      "Browse"]
     [:input {:type "file"
              :webkitdirectory "true"
@@ -102,10 +109,7 @@
              :on-change (fn [ev]
                           (let [files (get-files-from-event ev)
                                 dir-name (-> files first (j/get :webkitRelativePath) (.split "/") first)]
-                          (swap! state assoc :file-handles
-                                 {:source :input
-                                  :dir-name dir-name
-                                  :files files})))}]))
+                            (swap! state picked-files! :input dir-name {:files files})))}]))
 
 (defn component-frame [state]
   [:<>
@@ -114,7 +118,7 @@
      " "
      [:span.refresh-notification {:data-update (:refresh-counter @state)} "Refreshed"]]
     [:button {:on-click refresh-iframe} "Force refresh"]]
-   [:iframe.main {:src "files/index.html"}]])
+   [:iframe.main {:src (str "files/" (-> @state :file-handles :dir-name) "/index.html")}]])
 
 (defn component-main [state]
   (if (:started @state)
@@ -148,8 +152,7 @@
       (let [modified-files (->> modified-files
                                 (map (fn [[k v]] [k (dissoc v :content)]))
                                 (into {}))]
-        (.postMessage (-> @state :sw (j/get :active))
-                      (clj->js {:type "cache" :files modified-files}))))
+        (send-to-serviceworker @state {:type "cache" :files modified-files :prefix (-> @state :file-handles :dir-name)})))
     (swap! state update-in [:files] #(merge %1 modified-files))))
 
 (defn start {:dev/after-load true} []
