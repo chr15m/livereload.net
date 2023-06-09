@@ -12,7 +12,6 @@
 
 ; TODO: support drag and drop of folder
 ; TODO: front page design
-; TODO: support sub-directories
 
 ; TODO: warn about absolute URLs in the page if present
 
@@ -74,7 +73,7 @@
               (cond
                 (= fname "index.html")
                 (refresh-iframe)
-                (not (.startsWith fname "."))
+                (not (.startsWith (j/get file :name) "."))
                 (find-references-and-reload fname file)))))))))
 
 (defn picked-files! [*state source dir-name references]

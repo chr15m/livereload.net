@@ -1,5 +1,6 @@
 (ns livereload.watch
   (:require
+    [clojure.string :refer [join]]
     [promesa.core :as p]
     [applied-science.js-interop :as j]))
 
@@ -12,14 +13,21 @@
       results
       (unpack-entries entries results))))
 
-(defn get-files-from-picker [dir-handle]
+(defn get-files-from-picker [dir-handle dir-names]
   (p/let [entries (j/call dir-handle :entries)
           handles (clj->js (unpack-entries entries []))
           file-handle-promises (.map (js/Array.from handles)
                                      (fn [[_filename handle]]
-                                       (when (and handle (j/get handle :getFile))
-                                         (.getFile handle))))
-          files (js/Promise.all file-handle-promises)]
+                                       (cond
+                                         (and handle (j/get handle :getFile))
+                                         (p/let [file (.getFile handle)
+                                                 fname (j/get file :name)
+                                                 fname (join "/" (conj dir-names fname))]
+                                           #js [(j/assoc! file :fullpath fname)])
+                                         (and handle (j/get handle :getDirectoryHandle))
+                                         (get-files-from-picker handle (conj dir-names (j/get handle :name))))))
+          files (js/Promise.all file-handle-promises)
+          files (clj->js (apply concat files))]
     (.filter files identity)))
 
 (defn get-files-from-event [ev]
@@ -32,7 +40,7 @@
   (p/let [changed-files (js/Promise.all
                           (.map files
                                 (fn [f]
-                                  (let [fname (j/get f :name)]
+                                  (let [fname (j/get f :fullpath)]
                                     (when (not= (j/get f :lastModified)
                                                 (:lastModified (get known-files fname)))
                                       [fname (j/assoc! (j/select-keys f [:lastModified :size :type :name])
@@ -67,7 +75,7 @@
             known-files (fn-get-known-files)
             modified-files (case source
                              :picker
-                             (p/let [files (get-files-from-picker dir-handle)]
+                             (p/let [files (get-files-from-picker dir-handle [])]
                                (compare-file-last-modified (js/Array.from files) known-files))
                              :input
                              (compare-file-contents files known-files)
