@@ -83,6 +83,21 @@
                                       :dir-name dir-name}
                                      references)))
 
+(defn handle-modified-files [state modified-files]
+  (let [modified-files (->> modified-files
+                            (remove (fn [[k]] (and k (string/starts-with? k "."))))
+                            (into {}))]
+    (when (seq modified-files)
+      (js/console.log "modified-files" (clj->js modified-files))
+      ; TODO: send createObjectURL of the file instead of the contents
+      (let [modified-files (->> modified-files
+                                (map (fn [[k v]] [k (dissoc v :content)]))
+                                (into {}))]
+        (send-to-serviceworker @state {:type "cache" :files modified-files :prefix (-> @state :file-handles :dir-name)})))
+    (swap! state update-in [:files] #(merge %1 modified-files))))
+
+; *** ui components *** ;
+
 (defn component-start [state]
   (if (j/get js/window :showDirectoryPicker)
     [:button {:on-click
@@ -130,18 +145,7 @@
          The page you're developing will automatically refresh every time you save the code."]
      [:p "Get started: " [component-start state]]]))
 
-(defn handle-modified-files [state modified-files]
-  (let [modified-files (->> modified-files
-                            (remove (fn [[k]] (and k (string/starts-with? k "."))))
-                            (into {}))]
-    (when (seq modified-files)
-      (js/console.log "modified-files" (clj->js modified-files))
-      ; TODO: send createObjectURL of the file instead of the contents
-      (let [modified-files (->> modified-files
-                                (map (fn [[k v]] [k (dissoc v :content)]))
-                                (into {}))]
-        (send-to-serviceworker @state {:type "cache" :files modified-files :prefix (-> @state :file-handles :dir-name)})))
-    (swap! state update-in [:files] #(merge %1 modified-files))))
+; *** launch *** ;
 
 (defn start {:dev/after-load true} []
   (rdom/render [component-main state]
