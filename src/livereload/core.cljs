@@ -5,7 +5,8 @@
     [promesa.core :as p]
     [reagent.core :as r]
     [reagent.dom :as rdom]
-    [livereload.watch :refer [get-files-from-event check-dir-for-changes!]]))
+    [livereload.watch :refer [get-files-from-event check-dir-for-changes!]]
+    [livereload.worker :refer [register-service-worker send-to-serviceworker]]))
 
 (defonce state (r/atom {}))
 
@@ -75,19 +76,6 @@
                 (refresh-iframe)
                 (not (.startsWith fname "."))
                 (find-references-and-reload fname file)))))))))
-
-(defn register-service-worker [state]
-  (when (j/get js/navigator :serviceWorker)
-    (p/catch
-      (p/let [sw (j/call-in js/navigator [:serviceWorker :register] "files/worker.js")]
-        (swap! state assoc :sw sw)
-        (js/console.log "Registration:" sw)
-        )
-      (fn [err] (js/console.error err)))
-    (j/call-in js/navigator [:serviceWorker :addEventListener] "message" #(handle-worker-message %))))
-
-(defn send-to-serviceworker [*state message]
-  (.postMessage (-> *state :sw (j/get :active)) (clj->js message)))
 
 (defn picked-files! [*state source dir-name references]
   (send-to-serviceworker *state {:type "flush" :prefix dir-name})
@@ -160,7 +148,7 @@
                (js/document.getElementById "app")))
 
 (defn init []
-  (register-service-worker state)
+  (register-service-worker state handle-worker-message)
   (check-dir-for-changes!
     #(:file-handles @state)
     #(:files @state)

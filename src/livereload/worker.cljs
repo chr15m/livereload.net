@@ -60,3 +60,17 @@
   (js/console.log "loaded")
   (js/self.addEventListener "message" #(handle-message %1))
   (js/self.addEventListener "fetch" #(handle-fetch %1)))
+
+; *** client stuff *** ;
+
+(defn register-service-worker [state message-handler]
+  (when (j/get js/navigator :serviceWorker)
+    (p/catch
+      (p/let [sw (j/call-in js/navigator [:serviceWorker :register] "files/worker.js")]
+        (swap! state assoc :sw sw)
+        (js/console.log "Registration:" sw))
+      (fn [err] (js/console.error err)))
+    (j/call-in js/navigator [:serviceWorker :addEventListener] "message" #(message-handler %))))
+
+(defn send-to-serviceworker [*state message]
+  (.postMessage (-> *state :sw (j/get :active)) (clj->js message)))
