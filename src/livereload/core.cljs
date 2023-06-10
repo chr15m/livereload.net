@@ -83,7 +83,7 @@
                                       :dir-name dir-name}
                                      references)))
 
-(defn handle-modified-files [state modified-files]
+(defn handle-modified-files! [*state modified-files]
   (let [modified-files (->> modified-files
                             (remove (fn [[k]] (and k (string/starts-with? k "."))))
                             (into {}))]
@@ -93,8 +93,8 @@
       (let [modified-files (->> modified-files
                                 (map (fn [[k v]] [k (dissoc v :content)]))
                                 (into {}))]
-        (send-to-serviceworker @state {:type "cache" :files modified-files})))
-    (swap! state update-in [:files] #(merge %1 modified-files))))
+        (send-to-serviceworker *state {:type "cache" :files modified-files})))
+    modified-files))
 
 ; *** ui components *** ;
 
@@ -156,5 +156,5 @@
   (check-dir-for-changes!
     #(:file-handles @state)
     #(:files @state)
-    #(handle-modified-files state %))
+    #(swap! state update-in [:files] merge (handle-modified-files! state %)))
   (start))
