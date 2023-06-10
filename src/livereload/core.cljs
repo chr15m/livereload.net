@@ -28,7 +28,8 @@
       (j/assoc! sub :src (j/get sub "src")))))
 
 (defn find-references-and-reload [fname _file]
-  (let [sub (.querySelector js/document "iframe")]
+  (let [sub (.querySelector js/document "iframe")
+        fname (-> fname (.split "/") (.slice 1) (.join "/"))] ; stripe project prefix
     (js/console.log "Finding JS/CSS references to" fname "and reloading.")
     (when sub
       (let [scripts (j/call-in sub [:contentDocument :querySelectorAll] (str "script[src^='" fname "']"))
@@ -92,7 +93,7 @@
       (let [modified-files (->> modified-files
                                 (map (fn [[k v]] [k (dissoc v :content)]))
                                 (into {}))]
-        (send-to-serviceworker @state {:type "cache" :files modified-files :prefix (-> @state :file-handles :dir-name)})))
+        (send-to-serviceworker @state {:type "cache" :files modified-files})))
     (swap! state update-in [:files] #(merge %1 modified-files))))
 
 ; *** ui components *** ;

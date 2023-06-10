@@ -52,8 +52,7 @@
   ; on firefox we have to get content and compare it because all other fields are frozen
   (p/let [files-struct (p/all (for [f files]
                                 (p/let [content (j/call f :text)
-                                        webkit-path (j/get f :webkitRelativePath)
-                                        fname (-> webkit-path (.split "/") (.slice 1) (.join "/"))]
+                                        fname (j/get f :webkitRelativePath)]
                                   [fname
                                    (js->clj
                                      (j/assoc! (j/select-keys f [:lastModified :size :type :name])
@@ -75,7 +74,7 @@
             known-files (fn-get-known-files)
             modified-files (case source
                              :picker
-                             (p/let [files (get-files-from-picker dir-handle [])]
+                             (p/let [files (get-files-from-picker dir-handle [(j/get dir-handle :name)])]
                                (compare-file-last-modified (js/Array.from files) known-files))
                              :input
                              (compare-file-contents files known-files)
