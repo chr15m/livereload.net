@@ -35,6 +35,26 @@
       (j/get-in [:target :files])
       (js/Array.from)))
 
+(defn get-files-from-fs-entry [fs-entry dir-names]
+  (let [reader (.createReader fs-entry)
+        entries-promise (p/promisify #(.readEntries reader %))]
+  (p/let [entries (entries-promise)
+          file-entry-promises (.map (js/Array.from entries)
+                                     (fn [item]
+                                       (cond
+                                         (and item (j/get item :isFile))
+                                         (let [file-promise (p/promisify #(.file item %1))]
+                                           (p/let [file (file-promise)
+                                                   fname (j/get file :name)
+                                                   fname (join "/" (conj dir-names fname))]
+                                             #js [(j/assoc! file :fullpath fname)]))
+                                         (and item (j/get item :isDirectory))
+                                         (get-files-from-fs-entry item (conj dir-names (j/get item :name))))))
+          files (js/Promise.all file-entry-promises)
+          files (clj->js (apply concat files))]
+    (.filter files identity))))
+
+
 (defn compare-file-last-modified [files known-files]
   ; chrome can simply check the last modified using the new files API
   (p/let [changed-files (js/Promise.all
@@ -70,7 +90,7 @@
 
 (defn check-dir-for-changes! [fn-get-file-handles fn-get-known-files fn-callback]
   (p/catch
-    (p/let [{:keys [source files dir-handle]} (fn-get-file-handles)
+    (p/let [{:keys [source files dir-handle fs-entry]} (fn-get-file-handles)
             known-files (fn-get-known-files)
             modified-files (case source
                              :picker
@@ -78,6 +98,9 @@
                                (compare-file-last-modified (js/Array.from files) known-files))
                              :input
                              (compare-file-contents files known-files)
+                             :dropped
+                             (p/let [files (get-files-from-fs-entry fs-entry [(j/get fs-entry :name)])]
+                               (compare-file-last-modified (js/Array.from files) known-files))
                              {})]
       (fn-callback modified-files)
       (js/setTimeout #(check-dir-for-changes! fn-get-file-handles fn-get-known-files fn-callback) 250))

@@ -9,6 +9,14 @@ body {
   margin: auto;
 }
 
+.dropzone {
+  height: 20em;
+  width: 20em;
+  display: block;
+  border: 1px solid black;
+  background-color: silver;
+}
+
 /*** site containing iframe ***/
 
 iframe.main {

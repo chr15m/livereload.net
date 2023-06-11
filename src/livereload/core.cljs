@@ -83,13 +83,26 @@
                                       :dir-name dir-name}
                                      references)))
 
+(defn dropped-files! [*state ev]
+  (js/console.log "dropped" ev)
+  (.preventDefault ev)
+  (let [items (j/get-in ev [:dataTransfer :items])
+        first-item (first items)
+        fs-entry (when first-item
+                   (or (j/call first-item :webkitGetAsEntry)
+                       (j/call first-item :getAsEntry)))
+        dir-name (when fs-entry (j/get fs-entry :name))]
+    (js/console.log "FS Entry" fs-entry)
+    (if (and fs-entry (j/get fs-entry :isDirectory))
+      (picked-files! *state :dropped dir-name {:fs-entry fs-entry})
+      *state)))
+
 (defn handle-modified-files! [*state modified-files]
   (let [modified-files (->> modified-files
                             (remove (fn [[k]] (and k (string/starts-with? k "."))))
                             (into {}))]
     (when (seq modified-files)
       (js/console.log "modified-files" (clj->js modified-files))
-      ; TODO: send createObjectURL of the file instead of the contents
       (let [modified-files (->> modified-files
                                 (map (fn [[k v]] [k (dissoc v :content)]))
                                 (into {}))]
@@ -99,20 +112,23 @@
 ; *** ui components *** ;
 
 (defn component-start [state]
-  (if (j/get js/window :showDirectoryPicker)
-    [:button {:on-click
-              (fn [_ev]
-                (p/let [dir-handle (j/call js/window :showDirectoryPicker #js {:mode "read"})
-                        dir-name (j/get dir-handle :name)]
-                  (swap! state picked-files! :picker dir-name {:dir-handle dir-handle})))}
-     "Choose dev folder"]
-    [:input {:type "file"
-             :webkitdirectory "true"
-             :multiple true
-             :on-change (fn [ev]
-                          (let [files (get-files-from-event ev)
-                                dir-name (-> files first (j/get :webkitRelativePath) (.split "/") first)]
-                            (swap! state picked-files! :input dir-name {:files files})))}]))
+  [:div.dropzone
+   {:on-drop #(swap! state dropped-files! %)
+    :on-drag-over #(.preventDefault %)}
+   (if (j/get js/window :showDirectoryPicker)
+     [:button {:on-click
+               (fn [_ev]
+                 (p/let [dir-handle (j/call js/window :showDirectoryPicker #js {:mode "read"})
+                         dir-name (j/get dir-handle :name)]
+                   (swap! state picked-files! :picker dir-name {:dir-handle dir-handle})))}
+      "Choose dev folder"]
+     [:input {:type "file"
+              :webkitdirectory "true"
+              :multiple true
+              :on-change (fn [ev]
+                           (let [files (get-files-from-event ev)
+                                 dir-name (-> files first (j/get :webkitRelativePath) (.split "/") first)]
+                             (swap! state picked-files! :input dir-name {:files files})))}])])
 
 (defn component-frame [state]
   [:<>
@@ -130,7 +146,7 @@
      [:h1 "livereload.net"]
      [:p "Live-reloading web development. 100% in the browser. No build system required."]
      [:p "Choose your web app folder to get started:"]
-     [:p [component-start state]]
+     [component-start state]
      [:h2 "How it works"]
      [:ul
       [:li [:a {:href "#"} "Download the template"] " and unzip it on your computer."]
@@ -142,8 +158,7 @@
      [:p "You can use this as a simple alternative to sites like codepen and Glitch.
          All your code stays private on your computer.
          Nothing is actually uploaded and there is no server to upload to, everything runs right in your browser.
-         The page you're developing will automatically refresh every time you save the code."]
-     [:p "Get started: " [component-start state]]]))
+         The page you're developing will automatically refresh every time you save the code."]]))
 
 ; *** launch *** ;
 
