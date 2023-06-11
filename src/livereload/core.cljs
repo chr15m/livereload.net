@@ -156,5 +156,5 @@
   (check-dir-for-changes!
     #(:file-handles @state)
     #(:files @state)
-    #(swap! state update-in [:files] merge (handle-modified-files! state %)))
+    #(swap! state update-in [:files] merge (handle-modified-files! @state %)))
   (start))
