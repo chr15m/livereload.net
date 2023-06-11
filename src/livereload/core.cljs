@@ -105,7 +105,7 @@
                 (p/let [dir-handle (j/call js/window :showDirectoryPicker #js {:mode "read"})
                         dir-name (j/get dir-handle :name)]
                   (swap! state picked-files! :picker dir-name {:dir-handle dir-handle})))}
-     "Browse"]
+     "Choose dev folder"]
     [:input {:type "file"
              :webkitdirectory "true"
              :multiple true
