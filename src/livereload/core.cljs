@@ -11,14 +11,14 @@
 
 (defonce state (r/atom {}))
 
-; TODO: fix initial service worker registration (completely remove it and retry)
 ; TODO: social meta tags
 
-; TODO: test out a long page
 ; TODO: test performance with many files.
 ; TODO: test performance with large files (e.g. images)
 ; test nested dirs
 ; test editing multiple projects at once
+; test out a long page
+; fix initial service worker registration (completely remove it and retry)
 
 ; TODO: test Safari select & drop
 ; TODO: test Edge select & drop
