@@ -70,9 +70,9 @@
         (when sub
           (doseq [fname (.keys js/Object files)]
             (let [file (j/get files fname)]
-              ;(js/console.log "checking" fname file)
+              ;(js/console.log "checking" fname (j/get sub :src))
               (cond
-                (= fname "index.html")
+                (.endsWith (j/get sub :src) fname)
                 (refresh-iframe)
                 (not (.startsWith (j/get file :name) "."))
                 (find-references-and-reload fname file)))))))))
