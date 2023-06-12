@@ -6,29 +6,43 @@
     [reagent.core :as r]
     [reagent.dom :as rdom]
     [livereload.watch :refer [get-files-from-event check-dir-for-changes!]]
-    [livereload.worker :refer [register-service-worker send-to-serviceworker]]))
+    [livereload.worker :refer [register-service-worker send-to-serviceworker]]
+    [shadow.resource :as rc]))
 
 (defonce state (r/atom {}))
 
-; TODO: support drag and drop of folder
-; TODO: front page design
+; TODO: fix initial service worker registration (completely remove it and retry)
+; TODO: social meta tags
+
+; TODO: test out a long page
+; TODO: test performance with many files.
+; TODO: test performance with large files (e.g. images)
+; test nested dirs
+; test editing multiple projects at once
+
+; TODO: test Safari select & drop
+; TODO: test Edge select & drop
+; TODO: test Chrome select & drop
+; TODO: test Firefox select & drop
 
 ; TODO: warn about absolute URLs in the page if present
 
-; TODO: fix initial service worker registration (completely remove it and retry)
-; TODO: test out a long page
-; TODO: test nested dirs.
-; TODO: test performance with many files.
-; TODO: test performance with large files (e.g. images)
-; TODO: test editing multiple projects at once
+(defn refresh-notification []
+  (when-let [r (.querySelector js/document ".refresh-notification")]
+    (j/call-in r [:classList :remove] "fade")
+    (j/get r :offsetWidth)
+    (j/call-in r [:classList :add] "fade")))
 
 (defn refresh-iframe []
-  (let [sub (.querySelector js/document "iframe")]
+  (js/console.log "refresh-iframe")
+  (let [sub (.querySelector js/document "iframe.webreload-main")]
+    (js/console.log "sub" sub)
     (when sub
-      (j/assoc! sub :src (j/get sub "src")))))
+      (j/assoc! sub :src (j/get sub "src"))
+      (refresh-notification))))
 
 (defn find-references-and-reload [fname _file]
-  (let [sub (.querySelector js/document "iframe")
+  (let [sub (.querySelector js/document "iframe.webreload-main")
         fname (-> fname (.split "/") (.slice 1) (.join "/"))] ; stripe project prefix
     (js/console.log "Finding JS/CSS references to" fname "and reloading.")
     (when sub
@@ -57,7 +71,8 @@
             (.removeChild parent script)
             (.appendChild parent clone)))
         (doseq [metalink (.from js/Array metalinks)]
-          (.setAttribute metalink "href" src))))))
+          (.setAttribute metalink "href" src)))
+      (refresh-notification))))
 
 (defn handle-worker-message [event]
   ;(js/console.log "handle-worker-event" (j/get event :data))
@@ -66,7 +81,7 @@
       ;(js/console.log "cached" (j/get-in event [:data :files]))
       (swap! state assoc :started true)
       (let [files (j/get-in event [:data :files])
-            sub (.querySelector js/document "iframe")]
+            sub (.querySelector js/document "iframe.webreload-main")]
         (when sub
           (doseq [fname (.keys js/Object files)]
             (let [file (j/get files fname)]
@@ -109,56 +124,117 @@
         (send-to-serviceworker *state {:type "cache" :files modified-files})))
     modified-files))
 
+(defn activate-opener []
+  (.click (.querySelector js/document ".dropzone>.activate")))
+
 ; *** ui components *** ;
+
+(defn component-icon [c icon-svg]
+  [:div.icon
+   (merge c
+     {:dangerouslySetInnerHTML
+      {:__html icon-svg}})])
 
 (defn component-start [state]
   [:div.dropzone
-   {:on-drop #(swap! state dropped-files! %)
-    :on-drag-over #(.preventDefault %)}
+   {:on-click activate-opener}
+   [component-icon {:class "x4"} (rc/inline "fa/folder-open-o.svg")]
+   [:p
+    "Drag web project folder here." [:br]
+    "Or click to choose folder."]
    (if (j/get js/window :showDirectoryPicker)
-     [:button {:on-click
-               (fn [_ev]
-                 (p/let [dir-handle (j/call js/window :showDirectoryPicker #js {:mode "read"})
-                         dir-name (j/get dir-handle :name)]
-                   (swap! state picked-files! :picker dir-name {:dir-handle dir-handle})))}
+     [:button.activate
+      {:on-click
+       (fn [_ev]
+         (p/let [dir-handle (j/call js/window :showDirectoryPicker #js {:mode "read"})
+                 dir-name (j/get dir-handle :name)]
+           (swap! state picked-files! :picker dir-name {:dir-handle dir-handle})))}
       "Choose dev folder"]
-     [:input {:type "file"
-              :webkitdirectory "true"
-              :multiple true
-              :on-change (fn [ev]
-                           (let [files (get-files-from-event ev)
-                                 dir-name (-> files first (j/get :webkitRelativePath) (.split "/") first)]
-                             (swap! state picked-files! :input dir-name {:files files})))}])])
+     [:input.activate
+      {:type "file"
+       :webkitdirectory "true"
+       :multiple true
+       :on-change (fn [ev]
+                    (let [files (get-files-from-event ev)
+                          dir-name (-> files first (j/get :webkitRelativePath) (.split "/") first)]
+                      (swap! state picked-files! :input dir-name {:files files})))}])])
 
 (defn component-frame [state]
-  [:<>
-   [:div.float-ui
-    [:p "livereload.net - " (-> @state :file-handles :dir-name)
-     " "
-     [:span.refresh-notification {:data-update (:refresh-counter @state)} "Refreshed"]]
-    [:button {:on-click refresh-iframe} "Force refresh"]]
-   [:iframe.main {:src (str "files/" (-> @state :file-handles :dir-name) "/index.html")}]])
+  [:iframe.webreload-main
+   {:src (str "files/" (-> @state :file-handles :dir-name) "/index.html")}])
+
+(defn component-header []
+  [:header
+    [:div.lines.logo
+     {:dangerouslySetInnerHTML
+      {:__html (rc/inline "lines.svg")}}]
+   (when-let [dir-name (-> @state :file-handles :dir-name)]
+     [:div.ui
+      [:p.dir-name "\"" dir-name "\""]
+      [:span
+       [:span.refresh-notification.fade
+        {:data-update (:refresh-counter @state)}
+        "Refreshed"]
+       [:button {:on-click refresh-iframe} "Refresh"]]])
+   [:div.logo
+    [:a {:href "/"}
+     [:div
+      {:dangerouslySetInnerHTML
+       {:__html (rc/inline "header.svg")}}]]]])
 
 (defn component-main [state]
-  (if (:started @state)
-    [component-frame state]
-    [:div
-     [:h1 "livereload.net"]
-     [:p "Live-reloading web development. 100% in the browser. No build system required."]
-     [:p "Choose your web app folder to get started:"]
-     [component-start state]
-     [:h2 "How it works"]
-     [:ul
-      [:li [:a {:href "#"} "Download the template"] " and unzip it on your computer."]
-      [:li "Drag the folder onto this window, or choose the folder: " [component-start state]]
-      [:li "Open the files in your text editor."]]
-     [:p "When you make changes to the files and save them, your page will be automatically reloaded.
-         Reloading is intelligent. If you modify a CSS file, only the CSS will be reloaded.
-         If you modify a JS file, only the JS will be reloaded."]
-     [:p "You can use this as a simple alternative to sites like codepen and Glitch.
-         All your code stays private on your computer.
-         Nothing is actually uploaded and there is no server to upload to, everything runs right in your browser.
-         The page you're developing will automatically refresh every time you save the code."]]))
+  [:div.parent
+   {:on-drop #(swap! state dropped-files! %)
+    :on-drag-over #(.preventDefault %)
+    :on-drag-enter #(swap! state update-in [:drop-active] inc)
+    :on-drag-leave #(swap! state update-in [:drop-active] dec)
+    :class (when (> (:drop-active @state) 0) "drop-active")}
+   [component-header state]
+   (if (:started @state)
+     [component-frame state]
+     [:div.content
+      [:section.features
+       [:ul
+        [:li "Live-reloading web development."]
+        [:li "Runs 100% in the browser."]
+        [:li "No build system required."]]]
+      [component-start state]
+      [:p.download
+       [:a {:href "webreload-template.zip"
+            :download "webreload-template.zip"}
+        "Download web project template"] "."]
+      [:p [:a {:href "https://webreload.net"} "webreload.net"]
+       " gives you HTML, CSS, and JS hot-reloading without complicated node.js command line build tooling.
+       When you save your files they will be auto-reloaded and you will see the change straight away.
+       It's great for building simple web pages and apps with HTML, JavaScript, and CSS.
+       It runs 100% client side in your browser and all files stay on your local machine.
+       Works great with editors like VS Code, IntelliJ, Nodepad++, Vim, PyCharm, Sublime Text, and others.
+       Simply drag and drop your web project folder here to get started."]
+      [:h2 "How it works"]
+      [:ul
+       [:li "Drag your web project folder on here, or "
+        [:a {:href "#"
+             :on-click (fn [ev] (activate-opener)
+                         (.preventDefault ev))}
+         "choose your web project folder"] "."]
+       [:li "Open your project files in your text editor (e.g. index.html)."]
+       [:li "Start editing and save your changes."]]
+      [:p "When you change the files and save them your page will be automatically reloaded.
+          Reloading is intelligent. If you modify a CSS file, only the CSS will be reloaded.
+          If you modify a JS file, only the JS will be reloaded."]
+      [:p "You can use this as a simple alternative to sites like Codepen and Glitch.
+          You get to use your own editor.
+          All your code stays private on your computer and nothing is uploaded.
+          The page you're developing will automatically refresh every time you save the code."]
+      [:p "You can also self-host this web app on your own server.
+          It is a static HTML frontend so you can simply download
+          the page (right-click and 'Save As') and deploy it to your own server."]
+      [:footer
+       [:ul
+        [:li "A web app by " [:a {:href "https://mccormick.cx"} "Chris McCormick"] "."]
+        [:li "Made with " [:a {:href "https://clojurescript.org"} "ClojureScript"]  "."]
+        [:li [:a {:href "https://github.com/chr15m/webreload.net"} "Source code."]]]
+       [:a {:href "https://webreload.net"} [:img {:src "logo.svg"}]]]])])
 
 ; *** launch *** ;
 

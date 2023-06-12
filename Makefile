@@ -1,10 +1,13 @@
-build: $(shell find src) public/*
+build: $(shell find src) public/* public/webreload-template.zip
 	mkdir -p build
 	npx shadow-cljs release --debug app worker
 	rsync -aLz --exclude js --exclude '.*.swp' public/ build
 	touch build
 
-node_modules: package.json
+public/webreload-template.zip: src/webreload-template/**
+	cd src && zip -r ../$@ webreload-template
+
+node_modules: package.json public/webreload-template.zip
 	pnpm i --no-lockfile --shamefully-hoist
 	touch node_modules
 
