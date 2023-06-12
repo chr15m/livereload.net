@@ -1,7 +1,7 @@
 build: $(shell find src) public/* public/webreload-template.zip
 	mkdir -p build
 	npx shadow-cljs release --debug app worker
-	rsync -aLz --exclude js --exclude '.*.swp' public/ build
+	rsync -aLz --exclude js --exclude files --exclude '.*.swp' public/ build
 	touch build
 
 public/webreload-template.zip: src/webreload-template/**
