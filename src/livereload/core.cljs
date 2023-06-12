@@ -12,6 +12,7 @@
 (defonce state (r/atom {}))
 
 ; TODO: social meta tags
+; TODO: build static html
 
 ; TODO: test performance with many files.
 ; TODO: test performance with large files (e.g. images)
