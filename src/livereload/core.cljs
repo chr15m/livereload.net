@@ -14,6 +14,7 @@
 ; TODO: social meta tags
 ; TODO: UI is crunched on low rez windows
 ; TODO: build static html single file
+; TODO: copy templates across from Slingcode and add DoodleCSS
 
 ; TODO: test performance with many files.
 ; TODO: test performance with large files (e.g. images)
@@ -207,12 +208,13 @@
         [:li "Live-reloading web development."]
         [:li "Runs 100% in the browser."]
         [:li "No build system required."]]]
-      [component-start state]
-      [:p.download
-       [:a {:href "livereload-template.zip"
-            :download "livereload-template.zip"}
-        [:button
-         "Download template"]]]
+      [:section.start
+       [component-start state]
+       [:p.download
+        [:a {:href "livereload-template.zip"
+             :download "livereload-template.zip"}
+         [:button
+          "Download template"]]]]
       [:p [:a {:href "https://livereload.net"} "livereload.net"]
        " gives you HTML, CSS, and JS hot-reloading without complicated node.js command line build tooling.
        When you save your files they will be auto-reloaded and you will see the change straight away.
