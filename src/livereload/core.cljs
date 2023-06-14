@@ -37,14 +37,14 @@
 
 (defn refresh-iframe []
   (js/console.log "refresh-iframe")
-  (let [sub (.querySelector js/document "iframe.webreload-main")]
+  (let [sub (.querySelector js/document "iframe.livereload-main")]
     (js/console.log "sub" sub)
     (when sub
       (j/assoc! sub :src (j/get sub "src"))
       (refresh-notification))))
 
 (defn find-references-and-reload [fname _file]
-  (let [sub (.querySelector js/document "iframe.webreload-main")
+  (let [sub (.querySelector js/document "iframe.livereload-main")
         fname (-> fname (.split "/") (.slice 1) (.join "/"))] ; stripe project prefix
     (js/console.log "Finding JS/CSS references to" fname "and reloading.")
     (when sub
@@ -83,7 +83,7 @@
       ;(js/console.log "cached" (j/get-in event [:data :files]))
       (swap! state assoc :started true)
       (let [files (j/get-in event [:data :files])
-            sub (.querySelector js/document "iframe.webreload-main")]
+            sub (.querySelector js/document "iframe.livereload-main")]
         (when sub
           (doseq [fname (.keys js/Object files)]
             (let [file (j/get files fname)]
@@ -162,7 +162,7 @@
                       (swap! state picked-files! :input dir-name {:files files})))}])])
 
 (defn component-frame [state]
-  [:iframe.webreload-main
+  [:iframe.livereload-main
    {:src (str "files/" (-> @state :file-handles :dir-name) "/index.html")}])
 
 (defn component-header []
@@ -202,10 +202,10 @@
         [:li "No build system required."]]]
       [component-start state]
       [:p.download
-       [:a {:href "webreload-template.zip"
-            :download "webreload-template.zip"}
+       [:a {:href "livereload-template.zip"
+            :download "livereload-template.zip"}
         "Download web project template"] "."]
-      [:p [:a {:href "https://webreload.net"} "webreload.net"]
+      [:p [:a {:href "https://livereload.net"} "livereload.net"]
        " gives you HTML, CSS, and JS hot-reloading without complicated node.js command line build tooling.
        When you save your files they will be auto-reloaded and you will see the change straight away.
        It's great for building simple web pages and apps with HTML, JavaScript, and CSS.
@@ -235,8 +235,8 @@
        [:ul
         [:li "A web app by " [:a {:href "https://mccormick.cx"} "Chris McCormick"] "."]
         [:li "Made with " [:a {:href "https://clojurescript.org"} "ClojureScript"]  "."]
-        [:li [:a {:href "https://github.com/chr15m/webreload.net"} "Source code."]]]
-       [:a {:href "https://webreload.net"} [:img {:src "logo.svg"}]]]])])
+        [:li [:a {:href "https://github.com/chr15m/livereload.net"} "Source code."]]]
+       [:a {:href "https://livereload.net"} [:img {:src "logo.svg"}]]]])])
 
 ; *** launch *** ;
 

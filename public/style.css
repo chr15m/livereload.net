@@ -213,7 +213,7 @@ button.success {
 
 /*** site containing iframe ***/
 
-iframe.webreload-main {
+iframe.livereload-main {
   position: absolute;
   top: var(--ui-height);
   left: 0px;
