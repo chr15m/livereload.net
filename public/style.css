@@ -41,6 +41,17 @@ header .logo div {
   top: 0px;
 }
 
+header .logo a:first-child svg {
+  width: 48px;
+  height: 48px;
+  margin-left: 6px;
+}
+
+header .logo .wordmark svg {
+  margin-left: 104px;
+  margin-top: 20px;
+}
+
 header .ui {
   position: absolute;
   width: 100%;
@@ -50,7 +61,7 @@ header .ui {
   justify-content: space-between;
   align-items: center;
   padding-right: 4px;
-  padding-left: 300px;
+  padding-left: 104px;
 }
 
 header .ui > span > * + * {

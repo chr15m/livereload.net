@@ -167,22 +167,29 @@
 
 (defn component-header []
   [:header
-    [:div.lines.logo
-     {:dangerouslySetInnerHTML
-      {:__html (rc/inline "lines.svg")}}]
-   (when-let [dir-name (-> @state :file-handles :dir-name)]
-     [:div.ui
-      [:p.dir-name "\"" dir-name "\""]
-      [:span
-       [:span.refresh-notification.fade
-        {:data-update (:refresh-counter @state)}
-        "Refreshed"]
-       [:button {:on-click refresh-iframe} "Refresh"]]])
-   [:div.logo
-    [:a {:href "/"}
-     [:div
-      {:dangerouslySetInnerHTML
-       {:__html (rc/inline "header.svg")}}]]]])
+   [:div.lines.logo
+    {:dangerouslySetInnerHTML
+     {:__html (rc/inline "lines.svg")}}]
+   (let [dir-name (-> @state :file-handles :dir-name)]
+     [:<>
+      (when dir-name
+        [:div.ui
+         [:p.dir-name dir-name]
+         [:span
+          [:span.refresh-notification.fade
+           {:data-update (:refresh-counter @state)}
+           "Refreshed"]
+          [:button {:on-click refresh-iframe} "Refresh"]]])
+      [:div.logo
+       [:a {:href "/"}
+        [:div
+         {:dangerouslySetInnerHTML
+          {:__html (rc/inline "logo.svg")}}]]
+       (when (not dir-name)
+         [:a.wordmark {:href "/"}
+          [:div
+           {:dangerouslySetInnerHTML
+            {:__html (rc/inline "wordmark.svg")}}]])]])])
 
 (defn component-main [state]
   [:div.parent
@@ -204,7 +211,8 @@
       [:p.download
        [:a {:href "livereload-template.zip"
             :download "livereload-template.zip"}
-        "Download web project template"] "."]
+        [:button
+         "Download template"]]]
       [:p [:a {:href "https://livereload.net"} "livereload.net"]
        " gives you HTML, CSS, and JS hot-reloading without complicated node.js command line build tooling.
        When you save your files they will be auto-reloaded and you will see the change straight away.
