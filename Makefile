@@ -11,6 +11,8 @@ node_modules: package.json public/livereload-template.zip
 	pnpm i --no-lockfile --shamefully-hoist
 	touch node_modules
 
+src/fa: node_modules
+
 .PHONY: watch clean
 
 watch: node_modules
