@@ -216,9 +216,11 @@
          [:button
           "Download template"]]]]
       [:p [:a {:href "https://livereload.net"} "livereload.net"]
-       " gives you HTML, CSS, and JS hot-reloading without complicated node.js command line build tooling.
-       When you save your files they will be auto-reloaded and you will see the change straight away.
-       It's great for building simple web pages and apps with HTML, JavaScript, and CSS.
+       " is a tool that provides hot-reloading for HTML, CSS, and JS, running completely in the browser,
+       eliminating the need for complex build tooling and Node.js command line. "
+       "When you save your files they are auto-reloaded in the browser and you will see the change straight away."]
+      [:p
+       "It's great for building simple web pages and apps with HTML, JavaScript, and CSS.
        It runs 100% client side in your browser and all files stay on your local machine.
        Works great with editors like VS Code, IntelliJ, Nodepad++, Vim, PyCharm, Sublime Text, and others.
        Simply drag and drop your web project folder here to get started."]
@@ -234,10 +236,9 @@
       [:p "When you change the files and save them your page will be automatically reloaded.
           Reloading is intelligent. If you modify a CSS file, only the CSS will be reloaded.
           If you modify a JS file, only the JS will be reloaded."]
-      [:p "You can use this as a simple alternative to sites like Codepen and Glitch.
-          You get to use your own editor.
-          All your code stays private on your computer and nothing is uploaded.
-          The page you're developing will automatically refresh every time you save the code."]
+      [:p "You can use this as a simple alternative to sites like Codepen and Glitch,
+          but you get to use your own editor on your computer.
+          All your code stays private on your computer and nothing is uploaded."]
       [:p "You can also self-host this web app on your own server.
           It is a static HTML frontend so you can simply download
           the page (right-click and 'Save As') and deploy it to your own server."]
