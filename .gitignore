@@ -6,3 +6,4 @@ public/files
 build
 .*.swp
 .clj-kondo/.cache
+public/livereload-template.zip
