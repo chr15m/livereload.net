@@ -32,7 +32,7 @@ html, body, #app, #loading {
 
 header {
   height: var(--ui-height);
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 header .logo div {
