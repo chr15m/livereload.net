@@ -11,7 +11,6 @@
 
 (defonce state (r/atom {}))
 
-; youtube video on front page
 ; set up analytics
 
 ; ---
@@ -24,6 +23,7 @@
 ; TODO: test performance with large files (e.g. images)
 ; TODO: warn about absolute URLs in the page if present
 
+; youtube video on front page
 ; test nested dirs
 ; test editing multiple projects at once
 ; test out a long page
@@ -227,7 +227,8 @@
        It runs 100% client side in your browser and all files stay on your local machine.
        Works great with editors like VS Code, IntelliJ, Nodepad++, Vim, PyCharm, Sublime Text, and others.
        Simply drag and drop your web project folder here to get started."]
-      [:img {:src ""}]
+      [:a {:href "https://www.youtube.com/watch?v=0R2LnD9MC8E"
+           :target "_blank"} [:img {:src "video.png"}]]
       [:h2 "How it works"]
       [:ul
        [:li "Drag your web project folder on here, or "

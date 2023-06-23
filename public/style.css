@@ -144,6 +144,10 @@ button.success {
   background-color: var(--color-positive);
 }
 
+img {
+  max-width: 100%;
+}
+
 .highlight {
   color: var(--color-alt);
 }
