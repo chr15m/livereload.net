@@ -2,7 +2,7 @@ build: $(shell find src) public/* public/livereload-template.zip package.json se
 	mkdir -p build
 	npx shadow-cljs release --debug app worker
 	rsync -aLz --exclude js --exclude files --exclude '.*.swp' public/ build
-	cp package.json server.cljs deploy/* public/
+	cp package.json server.cljs deploy/* build/
 	touch build
 
 public/livereload-template.zip: src/livereload-template/**
