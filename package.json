@@ -1,10 +1,18 @@
 {
   "name": "livereload",
   "version": "0.0.1",
-  "dependencies": {
+  "devDependencies": {
     "font-awesome-svg-png": "^1.2.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "shadow-cljs": "^2.16.12"
+  },
+  "dependencies": {
+    "nbb": "^1.2.174",
+    "sitefox": "chr15m/sitefox#9cb73a8"
+  },
+  "scripts": {
+    "nbb": "nbb --classpath ${NODE_PATH:=./node_modules}/sitefox/src/:./src/scripts:./src",
+    "serve": "npm run nbb server.cljs"
   }
 }
