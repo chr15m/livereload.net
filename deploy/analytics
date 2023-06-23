@@ -1,0 +1,5 @@
+#!/bin/sh
+
+mkdir -p logs/analytics
+
+goaccess -f logs/access.log --log-format='%h %^[%d:%t %^] "%r" %s %b "%R" "%u"' --time-format="%H:%M:%S" --date-format="%d/%b/%Y" --ignore-referrer=livereload.net --ignore-crawlers --persist --restore --db-path logs/analytics > analytics.html

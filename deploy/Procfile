@@ -1,5 +1,6 @@
 #static: /
 web: npm run serve
+cron: 37 * * * * ./analytics
 # wsgi: dotted.module:entry_point
 # release: make PROD=1
 # cron: */5 * * * * python batch.py
