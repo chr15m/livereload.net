@@ -1,0 +1,7 @@
+#static: /
+web: npm run serve
+# wsgi: dotted.module:entry_point
+# release: make PROD=1
+# cron: */5 * * * * python batch.py
+# somepyworker: python somescript.py
+# somenodeworker: node somescript.js
