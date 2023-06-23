@@ -11,7 +11,10 @@
 
 (defonce state (r/atom {}))
 
-; TODO: UI is crunched on low rez windows
+; youtube video on front page
+; set up analytics
+
+; ---
 
 ; TODO: copy templates across from Slingcode and add DoodleCSS
 
@@ -19,18 +22,16 @@
 
 ; TODO: test performance with many files.
 ; TODO: test performance with large files (e.g. images)
+; TODO: warn about absolute URLs in the page if present
+
 ; test nested dirs
 ; test editing multiple projects at once
 ; test out a long page
 ; fix initial service worker registration (completely remove it and retry)
 ; social meta tags
+; UI is crunched on low rez windows
+; patreon and kofi links
 
-; TODO: test Safari select & drop
-; TODO: test Edge select & drop
-; TODO: test Chrome select & drop
-; TODO: test Firefox select & drop
-
-; TODO: warn about absolute URLs in the page if present
 
 (defn refresh-notification []
   (when-let [r (.querySelector js/document ".refresh-notification")]
@@ -226,6 +227,7 @@
        It runs 100% client side in your browser and all files stay on your local machine.
        Works great with editors like VS Code, IntelliJ, Nodepad++, Vim, PyCharm, Sublime Text, and others.
        Simply drag and drop your web project folder here to get started."]
+      [:img {:src ""}]
       [:h2 "How it works"]
       [:ul
        [:li "Drag your web project folder on here, or "
@@ -246,6 +248,12 @@
           the page (right-click and 'Save As') and deploy it to your own server."]
       [:footer
        [:ul
+        [:li [:span.donate
+              [:a {:href "https://ko-fi.com/chr15m" :target "_blank" :class "donation-ko-fi"}
+               [:span {:dangerouslySetInnerHTML {:__html (rc/inline "ko-fi.svg")}}]]]]
+        [:li [:span.donate
+              [:a {:href "https://patreon.com/chr15m" :target "_blank" :class "donation-patreon"}
+               [:span {:dangerouslySetInnerHTML {:__html (rc/inline "patreon.svg")}}]]]]
         [:li "A web app by " [:a {:href "https://mccormick.cx"} "Chris McCormick"] "."]
         [:li "Made with " [:a {:href "https://clojurescript.org"} "ClojureScript"]  "."]
         [:li [:a {:href "https://github.com/chr15m/livereload.net"} "Source code."]]]

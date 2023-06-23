@@ -90,6 +90,11 @@ footer img {
   margin-top: 2em;
 }
 
+footer .donate svg {
+  width: 280px;
+  max-width: 90vw;
+}
+
 h3 {
   font-size: 32px;
 }
