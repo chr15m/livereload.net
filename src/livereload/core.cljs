@@ -210,7 +210,8 @@
        [:ul
         [:li "Live-reloading web development."]
         [:li "Runs 100% in the browser."]
-        [:li "No build system required."]]]
+        [:li "No build system required."]
+        [:li "Bring your own editor."]]]
       [:section.start
        [component-start state]
        [:p.download
@@ -221,7 +222,8 @@
       [:p [:a {:href "https://livereload.net"} "livereload.net"]
        " is a tool that provides hot-reloading for HTML, CSS, and JS, running completely in the browser,
        eliminating the need for complex build tooling and Node.js command line. "
-       "When you save your files they are auto-reloaded in the browser and you will see the change straight away."]
+       "When you save your files on your local machine they are auto-reloaded
+       in the browser and you will see the change straight away."]
       [:p
        "It's great for building simple web pages and apps with HTML, JavaScript, and CSS.
        It runs 100% client side in your browser and all files stay on your local machine.
